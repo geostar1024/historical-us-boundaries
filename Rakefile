@@ -1,20 +1,30 @@
 # US boundaries 
-file "US_AtlasHCB_StateTerr_Gen01.zip" do
-  system %[curl -O http://publications.newberry.org/ahcbp/downloads/gis/US_AtlasHCB_StateTerr_Gen01.zip]
+file "US_AtlasHCB_StateTerr_Gen05.zip" do
+  system %[curl -O http://publications.newberry.org/ahcbp/downloads/gis/US_AtlasHCB_StateTerr_Gen05.zip]
 end
 
-file "US_AtlasHCB_StateTerr_Gen01" => ["US_AtlasHCB_StateTerr_Gen01.zip"] do |t|
+file "US_AtlasHCB_StateTerr_Gen05" => ["US_AtlasHCB_StateTerr_Gen05.zip"] do |t|
   system %[unzip -o #{t.prerequisites.first}]
 end
 
-file "us.json" => ["US_AtlasHCB_StateTerr_Gen01"] do
-  system %[topojson -e cw.csv --id-property ID -p -o us.json \
-  states=US_AtlasHCB_StateTerr_Gen01/US_HistStateTerr_Gen01_Shapefile/US_HistStateTerr_Gen01.shp]
+file "students-by-state.csv" do 
+  system %[xlsx -s "Static Chart" "Princeton Students Master List.xlsx" | sed "/^,.*/d" | sed "/^Totals.*/d" | tr ' ' '_' > students-by-state.csv]
+end
+
+file "students.csv" do
+  system %[./mkstudents.sh]
+end
+
+file "us.json" => ["US_AtlasHCB_StateTerr_Gen05"] do
+  system %[topojson -e students.csv --id-property ID -p -o us.json \
+  states=US_AtlasHCB_StateTerr_Gen05/US_HistStateTerr_Gen05_Shapefile/US_HistStateTerr_Gen05.shp]
+  # adjust original thirteen start time
+  system %[sed -i "s/1783-09-03/1748-01-01/g" us.json]
 end
 
 # Coastline
 file "ne_50m_coastline.zip" do
-  system %[curl -O http://www.nacis.org/naturalearth/50m/physical/ne_50m_coastline.zip]
+  system %[wget http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/50m/physical/ne_50m_coastline.zip]
 end
 
 file "coast.json" => ["ne_50m_coastline.zip"] do |t|
@@ -26,35 +36,22 @@ file "coast.json" => ["ne_50m_coastline.zip"] do |t|
   system %[topojson -o coast.json coast=ocean_clipped/ne_50m_coastline.shp]
 end
 
-results = FileList["us.json", "coast.json"]
+
+results = FileList["students-by-state.csv", "students.csv", "us.json", "coast.json"]
 
 task :default => results
-
-desc "Push the project to lincolnmullen.com"
-task :deploy do
-
-  ssh_port       = "22"
-  ssh_user       = "reclaim"
-  rsync_delete   = true
-  rsync_options  = "--progress --stats -avze"
-  public_dir     = "." 
-  document_root  = "~/public_html/lincolnmullen.com/projects/us-boundaries"
-  
-  exclude = ""
-  if File.exists?('./rsync-exclude')
-    exclude = "--exclude-from '#{File.expand_path('./rsync-exclude')}'"
-  end
-
-  system("rsync #{rsync_options} 'ssh -p #{ssh_port}' #{exclude} #{"--delete" unless rsync_delete == false} #{public_dir}/ #{ssh_user}:#{document_root}")
-
-end
 
 require "rake/clean"
 
 CLEAN.include("US_AtlasHCB_StateTerr_Gen01",
              "ocean_clipped*",
              "ne_50m_coastline",
-             "DC_AtlasHCB")
+             "DC_AtlasHCB",
+             "us.json",
+             "coast.json",
+             "students.csv",
+             "students-by-state.csv")
+             
 
 CLOBBER.include("*.json")
 
