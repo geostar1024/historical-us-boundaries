@@ -17,7 +17,7 @@ var mapScale=1050; // don't know the units
 var sliderHeight=20;
 var sliderStart=new Date(1748,1,1);
 var sliderEnd=new Date(1865,1,1);
-var sliderNote=new Date(1783,1,1);
+var sliderNote=new Date(1784,1,1);
 
 // legend elements
 
@@ -95,7 +95,7 @@ svg.append("rect")
 .on("click", reset);
 
 
-function ready(error, us, coast) { 
+function ready(error, us, coast) {
 
 	var states = topojson.feature(us, us.objects.states);
 	var coastline  = topojson.feature(coast, coast.objects.coast);
@@ -113,7 +113,7 @@ function ready(error, us, coast) {
 	.data(states.features)
 	.enter()
 	.append("path")
-	.attr("class", function(d) { 
+	.attr("class", function(d) {
 	return "unit " + d.id;
 	})
 	.attr("d", path)
@@ -207,7 +207,7 @@ function ready(error, us, coast) {
 	.text("South: 0 (0.00%)");
 
 	// create scale for legend
-		
+
 	var legend = svg.append("g");
 
 	for(k = 0; k <= legendScaleSteps; k++) {
@@ -235,7 +235,7 @@ function ready(error, us, coast) {
 			.text(Math.round(k/legendScaleStep)+" Students");
 		}
 	}
-          
+
 	// create note indicator
 	svg.append("g").append("text")
 	.classed("exp-label", true)
@@ -243,12 +243,12 @@ function ready(error, us, coast) {
 	.attr("text-anchor", "start")
 	.attr("x", mapSize[0] - 460)
 	.attr("y", mapSize[1] - 15)
-	.text("*1783 state borders are used pre-1783.");
+	.text("*1784 state borders are used pre-1784.");
 
 	// heart of the code
 	// detects slider clicks and mouseovers, and updates the map accordingly
 	function brushed() {
-		
+
 		// get click location
 		var value = brush.extent()[0];
 
@@ -256,7 +256,7 @@ function ready(error, us, coast) {
 			value = x.invert(d3.mouse(this)[0]);
 			brush.extent([value, value]);
 		}
-	
+
 		// set slider location
 		handle.attr("cx", x(value));
 
@@ -284,7 +284,7 @@ function ready(error, us, coast) {
 		// connect svg elements to their data
 	    svg.selectAll(".unit")
 	    .data(states.features)
-	    
+
 		// determine if state should be active now
 	    .classed("active", function(d) {
 			return (new Date(d.properties.START_DATE)) <= value && value <= (new Date(d.properties.END_DATE));
@@ -318,7 +318,7 @@ function ready(error, us, coast) {
 			tooltip.classed("hidden", true);
 		});
 	}
-}  
+}
 
 //// utilty functions
 
@@ -327,7 +327,7 @@ function createClass(name,rules){
     var style = document.createElement('style');
     style.type = 'text/css';
     document.getElementsByTagName('head')[0].appendChild(style);
-    if(!(style.sheet||{}).insertRule) 
+    if(!(style.sheet||{}).insertRule)
         (style.styleSheet || style.sheet).addRule(name, rules);
     else
         style.sheet.insertRule(name+"{"+rules+"}",0);

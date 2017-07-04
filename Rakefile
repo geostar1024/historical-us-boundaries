@@ -1,4 +1,4 @@
-# US boundaries 
+# US boundaries
 file "US_AtlasHCB_StateTerr_Gen05.zip" do
   system %[curl -O http://publications.newberry.org/ahcbp/downloads/gis/US_AtlasHCB_StateTerr_Gen05.zip]
 end
@@ -7,8 +7,8 @@ file "US_AtlasHCB_StateTerr_Gen05" => ["US_AtlasHCB_StateTerr_Gen05.zip"] do |t|
   system %[unzip -o #{t.prerequisites.first}]
 end
 
-file "students-by-state.csv" do 
-  system %[xlsx -s "Static Chart" "Princeton Students Master List.xlsx" | sed "/^,.*/d" | sed "/^Totals.*/d" | tr ' ' '_' > students-by-state.csv]
+file "students-by-state.csv" do
+  system %[xlsx -s "Static Chart" "Princeton Students Master List"*".xlsx" | sed "/^,.*/d" | sed "/^Totals.*/d" | tr ' ' '_' > students-by-state.csv]
 end
 
 file "students.csv" do
@@ -18,6 +18,11 @@ end
 file "us.json" => ["US_AtlasHCB_StateTerr_Gen05"] do
   system %[topojson -e students.csv --id-property ID -p -o us.json \
   states=US_AtlasHCB_StateTerr_Gen05/US_HistStateTerr_Gen05_Shapefile/US_HistStateTerr_Gen05.shp]
+
+  # use 1784 borders for Virginia and Unorganized Federal Territory
+  system %[sed -i "s/1784-03-01/1748-01-01/g" us.json]
+  system %[sed -i 's/"va_state","VERSION":1,"START_DATE":"1783-09-03/"va_state","VERSION":1,"START_DATE":"1786-03-01/g' us.json]
+
   # adjust original thirteen start time
   system %[sed -i "s/1783-09-03/1748-01-01/g" us.json]
 end
@@ -51,7 +56,7 @@ CLEAN.include("US_AtlasHCB_StateTerr_Gen01",
              "coast.json",
              "students.csv",
              "students-by-state.csv")
-             
+
 
 CLOBBER.include("*.json")
 
